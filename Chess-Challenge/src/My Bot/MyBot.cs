@@ -10,12 +10,12 @@ public class MyBot : IChessBot
     public Move Think(Board board, Timer timer) //Returns the move to play
     {
         playingAsWhite = board.IsWhiteToMove; //Figure out what color pieces you are playing with
-        return chooseMove(board, 8);
+        return chooseMove(board, 20);
     }
 
     public int EvalBoard(Board board){ //Evaluates the current board state
         if(board.IsInCheckmate()){ //If checkmate, return infinite value
-            return(board.IsWhiteToMove ? -99999 : 99999);
+            return(board.IsWhiteToMove ? -9999999 : 9999999);
         }
         int evalScore = 0;
         if(board.IsInCheck()){ //Favors giving checks
@@ -30,7 +30,7 @@ public class MyBot : IChessBot
                 int progress= (int)(3.5-3.5*pieceColorModifier+pieceColorModifier*i/8);
                 if(piece.IsPawn){ //Favors positions where pawns are closer to the other side of the board (and closer to promotion)
                     
-                    piecescore = 100+progress*hcenterness;
+                    piecescore = 100+progress+progress*hcenterness/2;
                     
                 }
                 else{ //Favors positions where pieces (except for the king) have been moved from their starting position
