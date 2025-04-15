@@ -27,26 +27,29 @@ public class MyBot : IChessBot{
             if(!piece.IsNull){
                 int pieceColorModifier = piece.IsWhite ? 1 : -1;
                 int piecescore=0;
-                int hcenterness =4-Math.Abs(4-(i%8));
-                int vcenterness =4-Math.Abs(4-i/8);
-                
+                int hcenterness =(int)(3.5-Math.Abs(3.5-(i%8)));
+                int vcenterness =(int)(3.5-Math.Abs(3.5-i/8));
+                int vdevelop=(int)-Math.Abs(3.5-i/8);
                 int progress= (int)(3.5-3.5*pieceColorModifier+pieceColorModifier*i/8);
                 if(piece.IsPawn){ //Favors positions where pawns are closer to the other side of the board (and closer to promotion)
                     
-                    piecescore = 100+progress*5+progress*hcenterness;
+                    piecescore = 100+progress+progress*hcenterness/2;
                     
                 }
                 if(piece.IsBishop){
-                piecescore+=302;
+                piecescore+=302+vdevelop;
                 }
                 if(piece.IsKnight){
-                    piecescore+=300+hcenterness*vcenterness;
+                    piecescore+=300+hcenterness+vdevelop;
                 }
                 if(piece.IsRook){
                     piecescore+=500;
                 }
                 if(piece.IsQueen){
                     piecescore+=900;
+                }
+                if(piece.IsKing&&(i%8==2||i%8==6)){
+                    piecescore+=20;
                 }
                 evalScore+=piecescore*pieceColorModifier;
 
