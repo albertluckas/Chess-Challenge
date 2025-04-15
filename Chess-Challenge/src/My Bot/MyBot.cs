@@ -2,8 +2,7 @@
 using System;
 using System.Security.Cryptography.X509Certificates;
 
-public class MyBot : IChessBot
-{
+public class MyBot : IChessBot{
 
     Boolean playingAsWhite;
     Move bestMove;
