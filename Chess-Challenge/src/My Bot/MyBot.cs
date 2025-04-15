@@ -9,8 +9,10 @@ public class MyBot : IChessBot
     Move bestMove;
     public Move Think(Board board, Timer timer) //Returns the move to play
     {
+        
         playingAsWhite = board.IsWhiteToMove; //Figure out what color pieces you are playing with
-        return chooseMove(board, 20);
+        checkTree(board, 3,true);
+        return bestMove;
     }
 
     public int EvalBoard(Board board){ //Evaluates the current board state
@@ -63,25 +65,20 @@ public class MyBot : IChessBot
         return evalScore;
     }
 
-    public Move chooseMove(Board board, int maxDepth){
-        Random rng = new();
-        Move[] moves = board.GetLegalMoves();
-        bestMove = moves[0];
-
-        int bestEval = playingAsWhite ? -99999 : 99999; 
-
-        checkTree(board,3,true);
-        return bestMove;
-    }
 
     public int checkTree(Board board, int depth, Boolean root){
         if(depth == 0){ //Base Case
             return EvalBoard(board);
         }
-
         Move[] moves = board.GetLegalMoves();
 
+        if(root){
+            bestMove=moves[0];
+        }
         int bestEval = board.IsWhiteToMove ? -99999 : 99999;
+        if(board.IsInCheckmate()){
+            return bestEval;
+        }
         foreach(Move move in moves){
 
             board.MakeMove(move);
