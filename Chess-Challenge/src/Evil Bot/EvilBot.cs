@@ -113,7 +113,7 @@ namespace ChessChallenge.Example
             return EvalBoard(board);
         }
         Move[] moves = board.GetLegalMoves();
-        //sortmoves(board, moves);
+        sortmoves(board, moves);
         int csign=board.IsWhiteToMove ? 1:-1;
         if(root){
             bestMove=moves[0];

@@ -113,7 +113,9 @@ public class MyBot : IChessBot{
             return EvalBoard(board);
         }
         Move[] moves = board.GetLegalMoves();
-        sortmoves(board, moves); //testing this line
+        if(depth>2){
+            sortmoves(board, moves); //testing this line
+        }
         int csign=board.IsWhiteToMove ? 1:-1;
         if(root){
             bestMove=moves[0];
