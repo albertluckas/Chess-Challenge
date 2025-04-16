@@ -1,28 +1,38 @@
 ﻿using ChessChallenge.API;
 using System;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 public class MyBot : IChessBot{
-
+//todo: sort moves by imidiate qality
     Boolean playingAsWhite;
     Move bestMove;
     public Move Think(Board board, Timer timer) //Returns the move to play
     {
         
-        int csign=board.IsWhiteToMove ? 1:-1;//Figure out what color pieces you are playing with
-        switch (evalstage(board)){
-            case 1:
-                checkTree(board, 5,true,-9999999*csign,9999999*csign);
-            break;
-            default:
-                checkTree(board, 3,true,-9999999*csign,9999999*csign);
-            break;
-
+        if(timer.MillisecondsRemaining<10){
+            return board.GetLegalMoves()[0];
 
         }
-        return bestMove;
+        
+        int csign=board.IsWhiteToMove ? 1:-1;//Figure out what color pieces you are playing with
+        if(timer.MillisecondsRemaining<100){
+            checkTree(board, 2,true,-9999999*csign,9999999*csign);
+            return bestMove;
+        }
+        if(timer.MillisecondsRemaining<1000){
+            checkTree(board, 3,true,-9999999*csign,9999999*csign);
+            return bestMove;
+        }
+        if(timer.MillisecondsRemaining>30000){
+            checkTree(board, 5,true,-9999999*csign,9999999*csign);
+            return bestMove;
+        } 
+        
+            checkTree(board, 4,true,-9999999*csign,9999999*csign);
+            return bestMove;
     }
 
     public int EvalBoard(Board board){ //Evaluates the current board state
@@ -71,7 +81,7 @@ public class MyBot : IChessBot{
         }
         return evalScore;
     }
-    public int evalstage(Board board){//assigns the board a stage 0: main 1:endgame
+    public int evalstage(Board board){//assigns the board a stage 0: main 1:endgame 2:known endgame
         int whitePieces=0;
         int blackPieces=0;
         for (int i = 0; i < 64; i++)
@@ -87,8 +97,13 @@ public class MyBot : IChessBot{
             }
         }
         if(whitePieces<=2||blackPieces<=2){
+            return 2;
+        }
+        if(whitePieces<=3||blackPieces<=3){
             return 1;
         }
+
+
         return 0;
     }
 
@@ -98,6 +113,7 @@ public class MyBot : IChessBot{
             return EvalBoard(board);
         }
         Move[] moves = board.GetLegalMoves();
+        sortmoves(board, moves); //testing this line
         int csign=board.IsWhiteToMove ? 1:-1;
         if(root){
             bestMove=moves[0];
@@ -127,5 +143,18 @@ public class MyBot : IChessBot{
         }
         
         return bestEval;
+    }
+    public void sortmoves(Board board, Move[] moves){
+        int next=0;
+        Move t;
+        for (int i = 0; i < moves.Length; i++)
+        {
+            if(moves[i].IsCapture||moves[i].IsCastles){
+                t=moves[i];
+                moves[i]=moves[next];
+                moves[next]=t;
+                next++;
+            }
+        }
     }
 }
