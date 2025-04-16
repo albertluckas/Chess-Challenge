@@ -22,13 +22,16 @@ public class MyBot : IChessBot{
             checkTree(board, 2,true,-99999*csign,99999*csign,timer);
             return bestMove;
         }
-        
         if(timer.MillisecondsRemaining<1000){
             checkTree(board, 3,true,-99999*csign,99999*csign,timer);
             return bestMove;
         }
-        
+        if(timer.MillisecondsRemaining<30000){
             checkTree(board, 4,true,-99999*csign,99999*csign,timer);
+            return bestMove;
+        }
+        
+            checkTree(board, 5,true,-99999*csign,99999*csign,timer);
             return bestMove;
     }
 
@@ -36,6 +39,9 @@ public class MyBot : IChessBot{
         int activesign=board.IsWhiteToMove ? 1 : -1;
         if(board.IsInCheckmate()){ //If checkmate, return infinite value
             return activesign*-999999999;
+        }
+        if(board.IsDraw()){
+            return 0;
         }
         int evalScore = 0;
         int openingbonus=0;
@@ -118,7 +124,7 @@ public class MyBot : IChessBot{
 
             board.MakeMove(move);
             if(move.IsCapture&&timer.MillisecondsRemaining>40*10000){
-                depth++;
+               //depth++;
             }
             int moveEval = checkTree(board, depth-1,false,bestforcedinactive,bestforcedactive,timer); //Continue checking, decrement depth
             board.UndoMove(move);
