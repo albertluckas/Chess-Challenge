@@ -19,7 +19,7 @@ namespace ChessChallenge.Example
 
     public int EvalBoard(Board board){ //Evaluates the current board state
         if(board.IsInCheckmate()){ //If checkmate, return infinite value
-            return(board.IsWhiteToMove ? -9999999 : 9999999);
+            return board.IsWhiteToMove ? -9999999 : 9999999;
         }
         int evalScore = 0;
         if(board.IsInCheck()){ //Favors giving checks
@@ -32,7 +32,7 @@ namespace ChessChallenge.Example
                 int piecescore=0;
                 int hcenterness =(int)(3.5-Math.Abs(3.5-(i%8)));
                 int vcenterness =(int)(3.5-Math.Abs(3.5-i/8));
-                int vdevelop=(int)-Math.Abs(3.5-i/8);
+                int vdevelop=(int)-Math.Abs(3.5-i/8)*2;
                 int progress= (int)(3.5-3.5*pieceColorModifier+pieceColorModifier*i/8);
                 if(piece.IsPawn){ //Favors positions where pawns are closer to the other side of the board (and closer to promotion)
                     
