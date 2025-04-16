@@ -1,5 +1,6 @@
 ﻿using ChessChallenge.API;
 using System;
+using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 public class MyBot : IChessBot{
@@ -9,8 +10,8 @@ public class MyBot : IChessBot{
     public Move Think(Board board, Timer timer) //Returns the move to play
     {
         
-        playingAsWhite = board.IsWhiteToMove; //Figure out what color pieces you are playing with
-        checkTree(board, 3,true);
+        int csign=board.IsWhiteToMove ? 1:-1;//Figure out what color pieces you are playing with
+        checkTree(board, 3,true,-9999999*csign,9999999*csign);
         return bestMove;
     }
 
@@ -62,30 +63,36 @@ public class MyBot : IChessBot{
     }
 
 
-    public int checkTree(Board board, int depth, Boolean root){
+    public int checkTree(Board board, int depth, Boolean root,int bestforcedactive, int bestforcedinactive){
+        
         if(depth == 0){ //Base Case
             return EvalBoard(board);
         }
         Move[] moves = board.GetLegalMoves();
-
+        int csign=board.IsWhiteToMove ? 1:-1;
         if(root){
             bestMove=moves[0];
         }
-        int bestEval = board.IsWhiteToMove ? -99999 : 99999;
+        int bestEval =-999999*csign;
         if(board.IsInCheckmate()){
             return bestEval;
         }
         foreach(Move move in moves){
 
             board.MakeMove(move);
-            int moveEval = checkTree(board, depth-1,false); //Continue checking, decrement depth
+            int moveEval = checkTree(board, depth-1,false,bestforcedinactive,bestforcedactive); //Continue checking, decrement depth
             board.UndoMove(move);
 
-            if(board.IsWhiteToMove ? (moveEval > bestEval) : (moveEval < bestEval)){ 
+            if(csign*moveEval > csign*bestEval){ 
                 bestEval = moveEval;
                 if(root){bestMove = move;}
             }
-            
+            if(csign*moveEval > csign*bestforcedinactive){ 
+                return 99999*csign;
+            }
+            if(csign*moveEval > csign*bestforcedactive){ 
+                bestforcedactive=moveEval;
+            }            
         }
         
         return bestEval;
