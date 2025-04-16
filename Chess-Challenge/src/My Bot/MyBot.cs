@@ -1,5 +1,6 @@
 ﻿using ChessChallenge.API;
 using System;
+using System.IO;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
@@ -11,7 +12,16 @@ public class MyBot : IChessBot{
     {
         
         int csign=board.IsWhiteToMove ? 1:-1;//Figure out what color pieces you are playing with
-        checkTree(board, 4,true,-9999999*csign,9999999*csign);
+        switch (evalstage(board)){
+            case 1:
+                checkTree(board, 5,true,-9999999*csign,9999999*csign);
+            break;
+            default:
+                checkTree(board, 3,true,-9999999*csign,9999999*csign);
+            break;
+
+
+        }
         return bestMove;
     }
 
@@ -61,7 +71,26 @@ public class MyBot : IChessBot{
         }
         return evalScore;
     }
-
+    public int evalstage(Board board){//assigns the board a stage 0: main 1:endgame
+        int whitePieces=0;
+        int blackPieces=0;
+        for (int i = 0; i < 64; i++)
+        {
+             Piece piece = board.GetPiece(new Square(i));
+            if(!piece.IsNull){
+                if(piece.IsWhite){
+                    whitePieces++;
+                }
+                else{
+                    blackPieces++;
+                }
+            }
+        }
+        if(whitePieces<=2||blackPieces<=2){
+            return 1;
+        }
+        return 0;
+    }
 
     public int checkTree(Board board, int depth, Boolean root,int bestforcedactive, int bestforcedinactive){
         
