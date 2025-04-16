@@ -11,7 +11,7 @@ public class MyBot : IChessBot{
     {
         
         int csign=board.IsWhiteToMove ? 1:-1;//Figure out what color pieces you are playing with
-        checkTree(board, 3,true,-9999999*csign,9999999*csign);
+        checkTree(board, 4,true,-9999999*csign,9999999*csign);
         return bestMove;
     }
 
@@ -86,13 +86,15 @@ public class MyBot : IChessBot{
             if(csign*moveEval > csign*bestEval){ 
                 bestEval = moveEval;
                 if(root){bestMove = move;}
+
+                if(csign*bestforcedactive > csign*bestforcedinactive){ 
+                    return 99999*csign;
+                }
+                if(csign*bestEval > csign*bestforcedactive){ 
+                    bestforcedactive=bestEval;
+                }  
             }
-            if(csign*moveEval > csign*bestforcedinactive){ 
-                return 99999*csign;
-            }
-            if(csign*moveEval > csign*bestforcedactive){ 
-                bestforcedactive=moveEval;
-            }            
+                      
         }
         
         return bestEval;
