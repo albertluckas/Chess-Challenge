@@ -19,19 +19,30 @@ public class MyBot : IChessBot{
         
         int csign=board.IsWhiteToMove ? 1:-1;//Figure out what color pieces you are playing with
         if(timer.MillisecondsRemaining<100){
-            checkTree(board, 2,true,-9999999*csign,9999999*csign);
+            checkTree(board, 2,true,-99999*csign,99999*csign);
             return bestMove;
         }
+        int stage=evalstage(board);
+        if(stage==2){
+            checkTree(board, 3,true,csign,9999999*csign);
+            return bestMove;
+
+        }
+        if(stage==1){
+            checkTree(board, 2,true,-9999999*csign,9999999*csign);
+            return bestMove;
+
+        }
         if(timer.MillisecondsRemaining<1000){
-            checkTree(board, 3,true,-9999999*csign,9999999*csign);
+            checkTree(board, 3,true,-99999*csign,99999*csign);
             return bestMove;
         }
         if(timer.MillisecondsRemaining>30000){
-            checkTree(board, 5,true,-9999999*csign,9999999*csign);
+            checkTree(board, 5,true,-99999*csign,99999*csign);
             return bestMove;
         } 
         
-            checkTree(board, 4,true,-9999999*csign,9999999*csign);
+            checkTree(board, 4,true,-99999*csign,99999*csign);
             return bestMove;
     }
 
@@ -50,7 +61,7 @@ public class MyBot : IChessBot{
                 int piecescore=0;
                 int hcenterness =(int)(3.5-Math.Abs(3.5-(i%8)));
                 int vcenterness =(int)(3.5-Math.Abs(3.5-i/8));
-                int vdevelop=(int)-Math.Abs(3.5-i/8)*2;
+                int vdevelop=(int)-Math.Abs(3.5-i/8-pieceColorModifier)*2;
                 int progress= (int)(3.5-3.5*pieceColorModifier+pieceColorModifier*i/8);
                 if(piece.IsPawn){ //Favors positions where pawns are closer to the other side of the board (and closer to promotion)
                     
@@ -69,9 +80,6 @@ public class MyBot : IChessBot{
                 if(piece.IsQueen){
                     piecescore+=900;
                 }
-                if(piece.IsKing&&(i%8==2||i%8==6)){
-                    piecescore+=20;
-                }
                 evalScore+=piecescore*pieceColorModifier;
 
                 
@@ -81,7 +89,7 @@ public class MyBot : IChessBot{
         }
         return evalScore;
     }
-    public int evalstage(Board board){//assigns the board a stage 0: main 1:endgame 2:known endgame
+    public int evalstage(Board board){//assigns the board a stage 0: main 1:endgame 2:push mate
         int whitePieces=0;
         int blackPieces=0;
         for (int i = 0; i < 64; i++)
@@ -96,7 +104,7 @@ public class MyBot : IChessBot{
                 }
             }
         }
-        if(whitePieces<=2||blackPieces<=2){
+        if(whitePieces<=1||blackPieces<=1){
             return 2;
         }
         if(whitePieces<=3||blackPieces<=3){
