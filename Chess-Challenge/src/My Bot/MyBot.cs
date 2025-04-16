@@ -2,12 +2,12 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization.Formatters;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 
 public class MyBot : IChessBot{
 //todo: sort moves by imidiate qality
-    Boolean playingAsWhite;
     Move bestMove;
     public Move Think(Board board, Timer timer) //Returns the move to play
     {
@@ -19,40 +19,31 @@ public class MyBot : IChessBot{
         
         int csign=board.IsWhiteToMove ? 1:-1;//Figure out what color pieces you are playing with
         if(timer.MillisecondsRemaining<100){
-            checkTree(board, 2,true,-99999*csign,99999*csign);
+            checkTree(board, 2,true,-99999*csign,99999*csign,timer);
             return bestMove;
         }
-        int stage=evalstage(board);
-        if(stage==2){
-            checkTree(board, 3,true,csign,9999999*csign);
-            return bestMove;
-
-        }
-        if(stage==1){
-            checkTree(board, 2,true,-9999999*csign,9999999*csign);
-            return bestMove;
-
-        }
-        if(timer.MillisecondsRemaining<1000){
-            checkTree(board, 3,true,-99999*csign,99999*csign);
-            return bestMove;
-        }
-        if(timer.MillisecondsRemaining>30000){
-            checkTree(board, 5,true,-99999*csign,99999*csign);
-            return bestMove;
-        } 
         
-            checkTree(board, 4,true,-99999*csign,99999*csign);
+        if(timer.MillisecondsRemaining<1000){
+            checkTree(board, 3,true,-99999*csign,99999*csign,timer);
+            return bestMove;
+        }
+        
+            checkTree(board, 4,true,-99999*csign,99999*csign,timer);
             return bestMove;
     }
 
     public int EvalBoard(Board board){ //Evaluates the current board state
+        int activesign=board.IsWhiteToMove ? 1 : -1;
         if(board.IsInCheckmate()){ //If checkmate, return infinite value
-            return board.IsWhiteToMove ? -9999999 : 9999999;
+            return activesign*-999999999;
         }
         int evalScore = 0;
+        int openingbonus=0;
+        int endgamebonus=0;
+        int totalPower=0;
         if(board.IsInCheck()){ //Favors giving checks
-            evalScore += board.IsWhiteToMove ? -50 : 50;
+            evalScore += activesign*-50;
+
         }
         for(int i = 0; i < 64; i++){
             Piece piece = board.GetPiece(new Square(i));
@@ -62,60 +53,51 @@ public class MyBot : IChessBot{
                 int hcenterness =(int)(3.5-Math.Abs(3.5-(i%8)));
                 int vcenterness =(int)(3.5-Math.Abs(3.5-i/8));
                 int vdevelop=(int)-Math.Abs(3.5-i/8-pieceColorModifier)*2;
-                int progress= (int)(3.5-3.5*pieceColorModifier+pieceColorModifier*i/8);
+                int progress= 4-(4-i/8)*pieceColorModifier;
                 if(piece.IsPawn){ //Favors positions where pawns are closer to the other side of the board (and closer to promotion)
                     
-                    piecescore = 100+progress+progress*hcenterness/2;
-                    
+                    piecescore = 100+progress*2;
+                    openingbonus+=pieceColorModifier*progress*hcenterness;
+                    endgamebonus+=pieceColorModifier*progress*progress;
                 }
                 if(piece.IsBishop){
-                piecescore+=302+vdevelop;
+                piecescore+=333;
+                openingbonus+=pieceColorModifier*vdevelop;
                 }
                 if(piece.IsKnight){
-                    piecescore+=300+hcenterness+vdevelop;
+                    piecescore+=305;
+                    openingbonus+=pieceColorModifier*(hcenterness+vdevelop);
                 }
                 if(piece.IsRook){
-                    piecescore+=500;
+                    piecescore+=563;
+                    if((i==3&&board.GetKingSquare(piece.IsWhite).Index==2)||(i==5&&board.GetKingSquare(piece.IsWhite).Index==6)
+                        ||(i==59&&board.GetKingSquare(piece.IsWhite).Index==58)||(i==61&&board.GetKingSquare(piece.IsWhite).Index==62)){
+                        openingbonus+=pieceColorModifier*100;
+                    }
                 }
                 if(piece.IsQueen){
-                    piecescore+=900;
+                    piecescore+=950;
+                    if(progress>0){
+                        openingbonus-=pieceColorModifier*200;
+                    }
                 }
                 evalScore+=piecescore*pieceColorModifier;
+                totalPower+=piecescore;
 
                 
             }
 
             
         }
+        
+        if(totalPower>=28){
+            evalScore+=openingbonus;
+
+        }
         return evalScore;
     }
-    public int evalstage(Board board){//assigns the board a stage 0: main 1:endgame 2:push mate
-        int whitePieces=0;
-        int blackPieces=0;
-        for (int i = 0; i < 64; i++)
-        {
-             Piece piece = board.GetPiece(new Square(i));
-            if(!piece.IsNull){
-                if(piece.IsWhite){
-                    whitePieces++;
-                }
-                else{
-                    blackPieces++;
-                }
-            }
-        }
-        if(whitePieces<=1||blackPieces<=1){
-            return 2;
-        }
-        if(whitePieces<=3||blackPieces<=3){
-            return 1;
-        }
-
-
-        return 0;
-    }
-
-    public int checkTree(Board board, int depth, Boolean root,int bestforcedactive, int bestforcedinactive){
+    
+    public int checkTree(Board board, int depth, Boolean root,int bestforcedactive, int bestforcedinactive,Timer timer){
         
         if(depth == 0){ //Base Case
             return EvalBoard(board);
@@ -135,7 +117,10 @@ public class MyBot : IChessBot{
         foreach(Move move in moves){
 
             board.MakeMove(move);
-            int moveEval = checkTree(board, depth-1,false,bestforcedinactive,bestforcedactive); //Continue checking, decrement depth
+            if(move.IsCapture&&timer.MillisecondsRemaining>40*10000){
+                depth++;
+            }
+            int moveEval = checkTree(board, depth-1,false,bestforcedinactive,bestforcedactive,timer); //Continue checking, decrement depth
             board.UndoMove(move);
 
             if(csign*moveEval > csign*bestEval){ 
